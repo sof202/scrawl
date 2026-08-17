@@ -15,7 +15,12 @@ const (
 )
 
 var (
-	white  = color.RGBA{255, 255, 255, 255}
+	white = color.RGBA{255, 255, 255, 255}
+
+	// The idea here is that, as we don't care about colours (only black
+	// strokes on a white background), our canvas is just a vector of
+	// black/white (Boolean). We then can just convert the canvas to pixels on
+	// each frame.
 	canvas = make([]bool, width*height) // false -> white, true -> black
 	pixels = make([]byte, width*height*bytesPerRow)
 )
