@@ -1,7 +1,10 @@
 package main
 
 import (
+	"image"
 	"image/color"
+	"image/png"
+	"os"
 	"unsafe"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -82,6 +85,8 @@ func main() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
+				saveImage()
+
 			case *sdl.MouseButtonEvent:
 				if e.Button != sdl.BUTTON_LEFT {
 					continue
@@ -98,7 +103,6 @@ func main() {
 					drawCircle(x, y, 10)
 				}
 			}
-
 		}
 		update()
 		sdl.Delay(16)
@@ -134,4 +138,24 @@ func drawCircle(cx, cy, radius int) {
 			canvas[x+y*int(width)] = true // black
 		}
 	}
+}
+
+func saveImage() error {
+	img := image.NewGray(image.Rect(0, 0, int(width), int(height)))
+
+	for i, drawn := range canvas {
+		var v byte
+		if !drawn {
+			v = 255 // white
+		}
+		img.Pix[i] = v
+	}
+
+	f, err := os.Create("drawing.png")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return png.Encode(f, img)
 }
