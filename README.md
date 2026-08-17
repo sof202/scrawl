@@ -59,3 +59,8 @@ So that's it. To emulate pencil and pen:
 - Version controlled notes written in markdown via a text editor
 - Images and diagrams can be rendered by plugins
 - Doodles can be handled by scrawl
+
+### Extra
+
+I've also been learning Go as of late, so this was a good opportunity to apply
+what I've learned (and use SDL).
