@@ -15,7 +15,8 @@ const (
 )
 
 var (
-	white = color.RGBA{255, 255, 255, 255}
+	drawing = false
+	white   = color.RGBA{255, 255, 255, 255}
 
 	// The idea here is that, as we don't care about colours (only black
 	// strokes on a white background), our canvas is just a vector of
@@ -78,9 +79,24 @@ func main() {
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch event.(type) {
+			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
+			case *sdl.MouseButtonEvent:
+				if e.Button != sdl.BUTTON_LEFT {
+					continue
+				}
+				switch e.Type {
+				case sdl.MOUSEBUTTONDOWN:
+					drawing = true
+				case sdl.MOUSEBUTTONUP:
+					drawing = false
+				}
+			case *sdl.MouseMotionEvent:
+				if drawing {
+					x, y := int(e.X), int(e.Y)
+					drawCircle(x, y, 10)
+				}
 			}
 		}
 		update()
