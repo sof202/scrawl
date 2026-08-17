@@ -158,7 +158,7 @@ func drawCircle(cx, cy, radius int) {
 	}
 }
 
-func saveImage(path string) error {
+func saveImage(path string) {
 	img := image.NewGray(image.Rect(0, 0, int(width), int(height)))
 
 	for i, drawn := range canvas {
@@ -171,9 +171,12 @@ func saveImage(path string) error {
 
 	f, err := os.Create(path)
 	if err != nil {
-		return err
+		fmt.Fprintln(os.Stderr, "Saving failed:", err)
+		return
 	}
 	defer f.Close()
 
-	return png.Encode(f, img)
+	if err := png.Encode(f, img); err != nil {
+		fmt.Fprintln(os.Stderr, "Encoding failed:", err)
+	}
 }
