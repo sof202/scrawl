@@ -87,6 +87,15 @@ func main() {
 				running = false
 				saveImage()
 
+			case *sdl.KeyboardEvent:
+				if e.Type != sdl.KEYDOWN {
+					continue
+				}
+				switch e.Keysym.Sym {
+				case sdl.K_c: // clear
+					canvas = make([]bool, width*height)
+				}
+
 			case *sdl.MouseButtonEvent:
 				if e.Button != sdl.BUTTON_LEFT {
 					continue
