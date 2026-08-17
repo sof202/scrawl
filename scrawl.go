@@ -94,6 +94,8 @@ func main() {
 				switch e.Keysym.Sym {
 				case sdl.K_c: // clear
 					canvas = make([]bool, width*height)
+				case sdl.K_ESCAPE: // exit without saving
+					running = false
 				}
 
 			case *sdl.MouseButtonEvent:
