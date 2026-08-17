@@ -4,6 +4,27 @@ Scrawl is a highly minimal ms paint clone. There are no colours, shapes, text
 or anything like that. It's just a window that can be drawn on. Once closed,
 the image is saved.
 
+## Usage
+
+Run the program with:
+
+```
+scrawl path/to/image.png
+```
+
+The output file will be a png and can be given as either a relative path or
+absolute path.
+
+Once the program loads:
+
+- Click+drag -> Draw lines
+- Scroll -> Change brush size
+- C -> Clear drawing
+- ESCAPE -> Exit without saving
+
+Closing the program will save the image in its current state to the path
+provided on the command line.
+
 ## Motivation
 
 I'm a mathematician, so as you'd expect, I like making notes with pencil and
