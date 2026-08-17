@@ -1,12 +1,23 @@
 package main
 
 import (
+	"image/color"
+	"unsafe"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
-	width  int32 = 800
-	height int32 = 600
+	width       int32 = 800
+	height      int32 = 600
+	bytesPerRow int32 = 4 // len("RGBA") = 4
+	stride            = int(width * bytesPerRow)
+)
+
+var (
+	white  = color.RGBA{255, 255, 255, 255}
+	canvas = make([]bool, width*height) // false -> white, true -> black
+	pixels = make([]byte, width*height*bytesPerRow)
 )
 
 func main() {
@@ -56,8 +67,29 @@ func main() {
 				running = false
 			}
 		}
+		canvasToPixels()
+		texture.Update(
+			nil,
+			unsafe.Pointer(unsafe.SliceData(pixels)),
+			stride,
+		)
 		renderer.Copy(texture, nil, nil)
 		renderer.Present()
 		sdl.Delay(16)
 	}
+}
+
+func canvasToPixels() {
+	for i, drawn := range canvas {
+		idx := i * int(bytesPerRow)
+		var v byte
+		if !drawn {
+			v = 255 // white
+		}
+		pixels[idx+0] = v
+		pixels[idx+1] = v
+		pixels[idx+2] = v
+		pixels[idx+3] = 255 // always no alpha/transparency
+	}
+
 }
