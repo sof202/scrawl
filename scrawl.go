@@ -64,14 +64,7 @@ func main() {
 	}
 	defer texture.Destroy()
 
-	running := true
-	for running {
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch event.(type) {
-			case *sdl.QuitEvent:
-				running = false
-			}
-		}
+	update := func() {
 		canvasToPixels()
 		texture.Update(
 			nil,
@@ -80,6 +73,17 @@ func main() {
 		)
 		renderer.Copy(texture, nil, nil)
 		renderer.Present()
+	}
+
+	running := true
+	for running {
+		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+			switch event.(type) {
+			case *sdl.QuitEvent:
+				running = false
+			}
+		}
+		update()
 		sdl.Delay(16)
 	}
 }
