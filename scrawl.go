@@ -98,6 +98,7 @@ func main() {
 					drawCircle(x, y, 10)
 				}
 			}
+
 		}
 		update()
 		sdl.Delay(16)
@@ -127,7 +128,7 @@ func drawCircle(cx, cy, radius int) {
 			}
 			x, y := cx+dx, cy+dy
 
-			if x < 0 || x > int(width) || y < 0 || y > int(height) { // OOB
+			if x < 0 || x >= int(width) || y < 0 || y >= int(height) { // OOB
 				continue
 			}
 			canvas[x+y*int(width)] = true // black
