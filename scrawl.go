@@ -102,3 +102,19 @@ func canvasToPixels() {
 	}
 
 }
+
+func drawCircle(cx, cy, radius int) {
+	for dy := -radius; dy <= radius; dy++ {
+		for dx := -radius; dx <= radius; dx++ {
+			if dx*dx+dy*dy > radius*radius { // circle defn: `x^2 + y^2 <= r^2`
+				continue
+			}
+			x, y := cx+dx, cy+dy
+
+			if x < 0 || x > int(width) || y < 0 || y > int(height) { // OOB
+				continue
+			}
+			canvas[x+y*int(width)] = true // black
+		}
+	}
+}
