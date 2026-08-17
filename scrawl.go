@@ -12,15 +12,18 @@ import (
 )
 
 const (
-	width       int32 = 800
-	height      int32 = 600
-	bytesPerRow int32 = 4 // len("RGBA") = 4
-	stride            = int(width * bytesPerRow)
+	width        int32 = 800
+	height       int32 = 600
+	bytesPerRow  int32 = 4 // len("RGBA") = 4
+	stride             = int(width * bytesPerRow)
+	minBrushSize       = 1
+	maxBrushSize       = 50
 )
 
 var (
-	drawing = false
-	white   = color.RGBA{255, 255, 255, 255}
+	drawing   = false
+	brushSize = 10
+	white     = color.RGBA{255, 255, 255, 255}
 
 	// The idea here is that, as we don't care about colours (only black
 	// strokes on a white background), our canvas is just a vector of
@@ -105,6 +108,15 @@ func main() {
 					running = false
 				}
 
+			case *sdl.MouseWheelEvent:
+				brushSize += int(e.Y) * 2
+				if brushSize > maxBrushSize {
+					brushSize = maxBrushSize
+				}
+				if brushSize < minBrushSize {
+					brushSize = minBrushSize
+				}
+
 			case *sdl.MouseButtonEvent:
 				if e.Button != sdl.BUTTON_LEFT {
 					continue
@@ -118,7 +130,7 @@ func main() {
 			case *sdl.MouseMotionEvent:
 				if drawing {
 					x, y := int(e.X), int(e.Y)
-					drawCircle(x, y, 10)
+					drawCircle(x, y, brushSize)
 				}
 			}
 		}
