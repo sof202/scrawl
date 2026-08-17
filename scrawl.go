@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -30,6 +31,12 @@ var (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
+		os.Exit(1)
+	}
+	outputPath := os.Args[1]
+
 	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
 		panic(err)
 	}
@@ -85,7 +92,7 @@ func main() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
-				saveImage()
+				saveImage(outputPath)
 
 			case *sdl.KeyboardEvent:
 				if e.Type != sdl.KEYDOWN {
@@ -151,7 +158,7 @@ func drawCircle(cx, cy, radius int) {
 	}
 }
 
-func saveImage() error {
+func saveImage(path string) error {
 	img := image.NewGray(image.Rect(0, 0, int(width), int(height)))
 
 	for i, drawn := range canvas {
@@ -162,7 +169,7 @@ func saveImage() error {
 		img.Pix[i] = v
 	}
 
-	f, err := os.Create("drawing.png")
+	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
