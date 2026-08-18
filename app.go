@@ -83,7 +83,7 @@ func NewApp(outputPath string, width, height int32) (*ScrawlApp, error) {
 	}
 	defer func() {
 		if !success {
-			renderer.Destroy()
+			texture.Destroy()
 		}
 	}()
 
