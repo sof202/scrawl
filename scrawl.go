@@ -22,11 +22,13 @@ const (
 )
 
 var (
-	drawing         = false
-	brushSize int32 = 10
-	mouseX          = width / 2
-	mouseY          = height / 2
-	white           = color.RGBA{255, 255, 255, 255}
+	drawing          = false
+	brushSize  int32 = 10
+	prevMouseX       = width / 2
+	prevMouseY       = height / 2
+	mouseX           = width / 2
+	mouseY           = height / 2
+	white            = color.RGBA{255, 255, 255, 255}
 
 	// The idea here is that, as we don't care about colours (only black
 	// strokes on a white background), our canvas is just a vector of
@@ -127,6 +129,7 @@ func main() {
 				}
 				switch e.Type {
 				case sdl.MOUSEBUTTONDOWN:
+					prevMouseX, prevMouseY = e.X, e.Y
 					drawing = true
 				case sdl.MOUSEBUTTONUP:
 					drawing = false
@@ -135,7 +138,8 @@ func main() {
 			case *sdl.MouseMotionEvent:
 				mouseX, mouseY = e.X, e.Y
 				if drawing {
-					drawCircle(mouseX, mouseY, brushSize)
+					drawLine(prevMouseX, prevMouseY, mouseX, mouseY)
+					prevMouseX, prevMouseY = e.X, e.Y
 				}
 			}
 		}
@@ -171,6 +175,57 @@ func drawCircle(cx, cy, radius int32) {
 				continue
 			}
 			canvas[x+y*width] = true // black
+		}
+	}
+}
+
+// from psuedocode in:
+//
+//	https://en.wikipedia.org/wiki/Bresenham's_line_algorithm#All_cases
+func drawLine(x0, y0, x1, y1 int32) {
+	var (
+		dx, dy, sx, sy, error, errorDoubled int32
+	)
+
+	abs := func(x int32) int32 {
+		if x < 0 {
+			return -x
+		}
+		return x
+	}
+
+	dx = abs(x1 - x0)
+	if x0 < x1 {
+		sx = 1
+	} else {
+		sx = -1
+	}
+
+	dy = -abs(y1 - y0)
+	if y0 < y1 {
+		sy = 1
+	} else {
+		sy = -1
+	}
+
+	error = dx + dy
+
+	for {
+		drawCircle(x0, y0, brushSize)
+		errorDoubled = 2 * error
+		if errorDoubled >= dy {
+			if x0 == x1 {
+				break
+			}
+			error += dy
+			x0 += sx
+		}
+		if errorDoubled <= dx {
+			if y0 == y1 {
+				break
+			}
+			error += dx
+			y0 += sy
 		}
 	}
 }
