@@ -119,7 +119,6 @@ func (a *ScrawlApp) Close() {
 }
 
 func (a *ScrawlApp) Run() error {
-	// Event listener
 	for a.running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			if err := a.handleEvent(event); err != nil {
