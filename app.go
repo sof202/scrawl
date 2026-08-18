@@ -29,8 +29,15 @@ type ScrawlApp struct {
 
 func NewApp(width, height int32) (*ScrawlApp, error) {
 	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
-		return &ScrawlApp{}, err
+		return nil, err
 	}
+
+	success := false
+	defer func() {
+		if !success {
+			sdl.Quit()
+		}
+	}()
 
 	window, err := sdl.CreateWindow(
 		"scrawl",
@@ -41,8 +48,13 @@ func NewApp(width, height int32) (*ScrawlApp, error) {
 		sdl.WINDOW_SHOWN,
 	)
 	if err != nil {
-		return &ScrawlApp{}, err
+		return nil, err
 	}
+	defer func() {
+		if !success {
+			window.Destroy()
+		}
+	}()
 
 	renderer, err := sdl.CreateRenderer(
 		window,
@@ -50,8 +62,13 @@ func NewApp(width, height int32) (*ScrawlApp, error) {
 		sdl.RENDERER_ACCELERATED,
 	)
 	if err != nil {
-		return &ScrawlApp{}, err
+		return nil, err
 	}
+	defer func() {
+		if !success {
+			renderer.Destroy()
+		}
+	}()
 
 	texture, err := renderer.CreateTexture(
 		uint32(sdl.PIXELFORMAT_RGBA32), //
@@ -60,9 +77,15 @@ func NewApp(width, height int32) (*ScrawlApp, error) {
 		height,
 	)
 	if err != nil {
-		return &ScrawlApp{}, err
+		return nil, err
 	}
+	defer func() {
+		if !success {
+			renderer.Destroy()
+		}
+	}()
 
+	success = true
 	return &ScrawlApp{
 		window:     window,
 		renderer:   renderer,
