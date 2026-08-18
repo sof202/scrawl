@@ -95,7 +95,9 @@ func (a *ScrawlApp) Run(outputPath string) error {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				a.running = false
-				a.saveImage(outputPath)
+				if err := a.saveImage(outputPath); err != nil {
+					return err
+				}
 
 			case *sdl.KeyboardEvent:
 				if e.Type != sdl.KEYDOWN {

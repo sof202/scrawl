@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -10,7 +9,7 @@ import (
 // Opens the given file path and encodes the current state of the canvas as a
 // png. Images are generally between 1KB-20KB depending on how varied the image
 // is (for more information look into the PNG file format).
-func (a *ScrawlApp) saveImage(path string) {
+func (a *ScrawlApp) saveImage(path string) error {
 	// Images drawn in scawl only use black (drawn) and white (not-drawn). As
 	// such, the image can be purely grayscale. This reduces some complexity
 	// and gives a slight speedup.
@@ -26,12 +25,12 @@ func (a *ScrawlApp) saveImage(path string) {
 
 	f, err := os.Create(path)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Saving failed:", err)
-		return
+		return err
 	}
 	defer f.Close()
 
 	if err := png.Encode(f, img); err != nil {
-		fmt.Fprintln(os.Stderr, "Encoding failed:", err)
+		return err
 	}
+	return nil
 }
