@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"unsafe"
 
@@ -23,6 +24,8 @@ const (
 var (
 	drawing   = false
 	brushSize = 10
+	mouseX    = width / 2
+	mouseY    = height / 2
 	white     = color.RGBA{255, 255, 255, 255}
 
 	// The idea here is that, as we don't care about colours (only black
@@ -86,6 +89,7 @@ func main() {
 			stride,
 		)
 		renderer.Copy(texture, nil, nil)
+		drawRing(renderer, mouseX, mouseY, int32(brushSize))
 		renderer.Present()
 	}
 
@@ -128,6 +132,7 @@ func main() {
 					drawing = false
 				}
 			case *sdl.MouseMotionEvent:
+				mouseX, mouseY = int32(e.X), int32(e.Y)
 				if drawing {
 					x, y := int(e.X), int(e.Y)
 					drawCircle(x, y, brushSize)
@@ -190,5 +195,20 @@ func saveImage(path string) {
 
 	if err := png.Encode(f, img); err != nil {
 		fmt.Fprintln(os.Stderr, "Encoding failed:", err)
+	}
+}
+
+func drawRing(renderer *sdl.Renderer, cx, cy, radius int32) {
+	renderer.SetDrawColor(128, 128, 128, 255) // gray
+	const circleSegments = 16
+	var prevX, prevY int32
+	for i := 0; i <= circleSegments; i++ {
+		angle := (float64(i) * 2 * math.Pi) / circleSegments
+		x := cx + int32(float64(radius)*math.Cos(angle))
+		y := cy + int32(float64(radius)*math.Sin(angle))
+		if i > 0 {
+			renderer.DrawLine(prevX, prevY, x, y)
+		}
+		prevX, prevY = x, y
 	}
 }
