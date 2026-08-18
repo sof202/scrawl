@@ -132,55 +132,65 @@ func (a *ScrawlApp) handleEvent(event sdl.Event) error {
 	switch e := event.(type) {
 	case *sdl.QuitEvent:
 		a.running = false
-		if err := a.saveImage(); err != nil {
-			return err
-		}
-
+		return a.saveImage()
 	case *sdl.KeyboardEvent:
-		if e.Type != sdl.KEYDOWN {
-			return nil
-		}
-		switch e.Keysym.Sym {
-		case sdl.K_c: // clear
-			a.canvas = make([]bool, a.width*a.height)
-		case sdl.K_ESCAPE: // exit without saving
-			a.running = false
-		}
-
+		a.handleKeyboardEvent(e)
 	case *sdl.MouseWheelEvent:
-		a.brushSize += e.Y * 4
-		if a.brushSize > maxBrushSize {
-			a.brushSize = maxBrushSize
-		}
-		if a.brushSize < minBrushSize {
-			a.brushSize = minBrushSize
-		}
-
+		a.handleMouseWheelEvent(e)
 	case *sdl.MouseButtonEvent:
-		if e.Button != sdl.BUTTON_LEFT {
-			return nil
-		}
-		switch e.Type {
-		case sdl.MOUSEBUTTONDOWN:
-			a.prevMouseX, a.prevMouseY = e.X, e.Y
-			a.drawing = true
-
-			// Accounts for the case where user only clicks the mouse.
-			// In such cases the line drawing algorithm might not proc
-			// as no mouse motion is detected.
-			a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
-		case sdl.MOUSEBUTTONUP:
-			a.drawing = false
-		}
-
+		a.handleMouseButtonEvent(e)
 	case *sdl.MouseMotionEvent:
-		a.mouseX, a.mouseY = e.X, e.Y
-		if a.drawing {
-			a.drawLine(a.prevMouseX, a.prevMouseY, a.mouseX, a.mouseY)
-			a.prevMouseX, a.prevMouseY = e.X, e.Y
-		}
+		a.handleMouseMotionEvent(e)
 	}
 	return nil
+}
+
+func (a *ScrawlApp) handleKeyboardEvent(e *sdl.KeyboardEvent) {
+	if e.Type != sdl.KEYDOWN {
+		return
+	}
+	switch e.Keysym.Sym {
+	case sdl.K_c: // clear
+		a.canvas = make([]bool, a.width*a.height)
+	case sdl.K_ESCAPE: // exit without saving
+		a.running = false
+	}
+}
+
+func (a *ScrawlApp) handleMouseWheelEvent(e *sdl.MouseWheelEvent) {
+	a.brushSize += e.Y * 4
+	if a.brushSize > maxBrushSize {
+		a.brushSize = maxBrushSize
+	}
+	if a.brushSize < minBrushSize {
+		a.brushSize = minBrushSize
+	}
+}
+
+func (a *ScrawlApp) handleMouseButtonEvent(e *sdl.MouseButtonEvent) {
+	if e.Button != sdl.BUTTON_LEFT {
+		return
+	}
+	switch e.Type {
+	case sdl.MOUSEBUTTONDOWN:
+		a.prevMouseX, a.prevMouseY = e.X, e.Y
+		a.drawing = true
+
+		// Accounts for the case where user only clicks the mouse.
+		// In such cases the line drawing algorithm might not proc
+		// as no mouse motion is detected.
+		a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
+	case sdl.MOUSEBUTTONUP:
+		a.drawing = false
+	}
+}
+
+func (a *ScrawlApp) handleMouseMotionEvent(e *sdl.MouseMotionEvent) {
+	a.mouseX, a.mouseY = e.X, e.Y
+	if a.drawing {
+		a.drawLine(a.prevMouseX, a.prevMouseY, a.mouseX, a.mouseY)
+		a.prevMouseX, a.prevMouseY = e.X, e.Y
+	}
 }
 
 func (a *ScrawlApp) updateScreen() {
