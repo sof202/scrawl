@@ -25,7 +25,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
 		os.Exit(1)
 	}
-	outputPath := os.Args[1]
 
 	app, err := newApp(800, 600)
 	if err != nil {
@@ -33,7 +32,7 @@ func main() {
 	}
 	defer app.Close()
 
-	if err := app.Run(outputPath); err != nil {
+	if err := app.Run(os.Args[1]); err != nil {
 		log.Fatal(err)
 	}
 }
