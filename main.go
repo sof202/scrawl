@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	bytesPerRow   int32 = 4 // len("RGBA") = 4
-	defaultWidth  int32 = 800
+	bytesPerRow int32 = 4 // len("RGBA") = 4
+
+	// Canvas is to be square, I like this more aesthetically
+	defaultWidth  int32 = 600
 	defaultHeight int32 = 600
 	minBrushSize  int32 = 1
 	maxBrushSize  int32 = 50
