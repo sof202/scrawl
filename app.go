@@ -22,6 +22,10 @@ type ScrawlApp struct {
 	canvas []bool
 	pixels []byte
 
+	// A single app is destined to be saved in only a single location, as such
+	// the app owns it's output path. This isn't common in other similar
+	// programs, but eliminates it as a pass-through variable and is
+	// functionally equivalent.
 	outputPath string
 
 	drawing                                bool
