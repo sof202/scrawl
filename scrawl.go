@@ -139,6 +139,11 @@ func main() {
 				case sdl.MOUSEBUTTONDOWN:
 					prevMouseX, prevMouseY = e.X, e.Y
 					drawing = true
+
+					// Accounts for the case where user only clicks the mouse.
+					// In such cases the line drawing algorithm might not proc
+					// as no mouse motion is detected.
+					drawCircle(prevMouseX, prevMouseY, brushSize)
 				case sdl.MOUSEBUTTONUP:
 					drawing = false
 				}
