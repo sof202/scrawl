@@ -22,11 +22,11 @@ const (
 )
 
 var (
-	drawing   = false
-	brushSize = 10
-	mouseX    = width / 2
-	mouseY    = height / 2
-	white     = color.RGBA{255, 255, 255, 255}
+	drawing         = false
+	brushSize int32 = 10
+	mouseX          = width / 2
+	mouseY          = height / 2
+	white           = color.RGBA{255, 255, 255, 255}
 
 	// The idea here is that, as we don't care about colours (only black
 	// strokes on a white background), our canvas is just a vector of
@@ -89,7 +89,7 @@ func main() {
 			stride,
 		)
 		renderer.Copy(texture, nil, nil)
-		drawRing(renderer, mouseX, mouseY, int32(brushSize))
+		drawRing(renderer, mouseX, mouseY, brushSize)
 		renderer.Present()
 	}
 
@@ -113,7 +113,7 @@ func main() {
 				}
 
 			case *sdl.MouseWheelEvent:
-				brushSize += int(e.Y) * 2
+				brushSize += e.Y * 2
 				if brushSize > maxBrushSize {
 					brushSize = maxBrushSize
 				}
@@ -132,10 +132,9 @@ func main() {
 					drawing = false
 				}
 			case *sdl.MouseMotionEvent:
-				mouseX, mouseY = int32(e.X), int32(e.Y)
+				mouseX, mouseY = e.X, e.Y
 				if drawing {
-					x, y := int(e.X), int(e.Y)
-					drawCircle(x, y, brushSize)
+					drawCircle(mouseX, mouseY, brushSize)
 				}
 			}
 		}
@@ -159,7 +158,7 @@ func canvasToPixels() {
 
 }
 
-func drawCircle(cx, cy, radius int) {
+func drawCircle(cx, cy, radius int32) {
 	for dy := -radius; dy <= radius; dy++ {
 		for dx := -radius; dx <= radius; dx++ {
 			if dx*dx+dy*dy > radius*radius { // circle defn: `x^2 + y^2 <= r^2`
@@ -167,10 +166,10 @@ func drawCircle(cx, cy, radius int) {
 			}
 			x, y := cx+dx, cy+dy
 
-			if x < 0 || x >= int(width) || y < 0 || y >= int(height) { // OOB
+			if x < 0 || x >= width || y < 0 || y >= height { // OOB
 				continue
 			}
-			canvas[x+y*int(width)] = true // black
+			canvas[x+y*width] = true // black
 		}
 	}
 }
