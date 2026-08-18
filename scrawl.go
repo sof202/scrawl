@@ -38,13 +38,17 @@ var (
 	pixels = make([]byte, width*height*bytesPerRow)
 )
 
+// Main flow:
+// Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
+	// Parse args
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
 		os.Exit(1)
 	}
 	outputPath := os.Args[1]
 
+	// Setup SDL2 window
 	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
 		panic(err)
 	}
@@ -83,7 +87,7 @@ func main() {
 	}
 	defer texture.Destroy()
 
-	update := func() {
+	updateScreen := func() {
 		canvasToPixels()
 		texture.Update(
 			nil,
@@ -91,10 +95,14 @@ func main() {
 			stride,
 		)
 		renderer.Copy(texture, nil, nil)
+
+		// Must come after copying texture as the texture covers the entire
+		// window.
 		drawRing(renderer, mouseX, mouseY, brushSize)
 		renderer.Present()
 	}
 
+	// Event listener
 	running := true
 	for running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -143,11 +151,14 @@ func main() {
 				}
 			}
 		}
-		update()
+		updateScreen()
 		sdl.Delay(16)
 	}
 }
 
+// Our canvas holds whether each pixel is black/drawn or white/not-drawn. This
+// isn't useful to the renderer however. As such, we need to convert this
+// information into RGBA information for each pixel on the screen/texture.
 func canvasToPixels() {
 	for i, drawn := range canvas {
 		idx := i * int(bytesPerRow)
@@ -163,6 +174,8 @@ func canvasToPixels() {
 
 }
 
+// Updates the canvas to have a circle centred at the cartesian coordinate
+// (cx,cy) with the given radius.
 func drawCircle(cx, cy, radius int32) {
 	for dy := -radius; dy <= radius; dy++ {
 		for dx := -radius; dx <= radius; dx++ {
@@ -182,6 +195,12 @@ func drawCircle(cx, cy, radius int32) {
 // from psuedocode in:
 //
 //	https://en.wikipedia.org/wiki/Bresenham's_line_algorithm#All_cases
+//
+// This was required as drawCircle on it's own (being called continuously
+// whilst mouse is held) results in skipping (due to the speed of processing).
+// Rather than optimising everything, it's easier to use a line drawing
+// algorithm such as this one (which is good enough as anti-aliasing isn't
+// desirable here).
 func drawLine(x0, y0, x1, y1 int32) {
 	var (
 		dx, dy, sx, sy, error, errorDoubled int32
@@ -230,7 +249,13 @@ func drawLine(x0, y0, x1, y1 int32) {
 	}
 }
 
+// Opens the given file path and encodes the current state of the canvas as a
+// png. Images are generally between 1KB-20KB depending on how varied the image
+// is (for more information look into the PNG file format).
 func saveImage(path string) {
+	// Images drawn in scawl only use black (drawn) and white (not-drawn). As
+	// such, the image can be purely grayscale. This reduces some complexity
+	// and gives a slight speedup.
 	img := image.NewGray(image.Rect(0, 0, int(width), int(height)))
 
 	for i, drawn := range canvas {
@@ -253,6 +278,10 @@ func saveImage(path string) {
 	}
 }
 
+// Draws radial line segments around the position given by cartesian
+// coordinates (cx,cy) with the given radius. The primary purpose being:
+// Drawing a circle around the cursor indicating where 'paint' will be placed
+// on the screen.
 func drawRing(renderer *sdl.Renderer, cx, cy, radius int32) {
 	renderer.SetDrawColor(128, 128, 128, 255) // gray
 	const circleSegments = 16
