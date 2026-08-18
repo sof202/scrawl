@@ -4,6 +4,30 @@ Scrawl is a highly minimal ms paint clone. There are no colours, shapes, text
 or anything like that. It's just a window that can be drawn on. Once closed,
 the image is saved.
 
+## Installation
+
+### Prerequisites
+
+1. `CGO_ENABLED=1` (should be on by default, but some distros disable it)
+2. A C compiler (gcc/clang)
+    - Anything that's been released in the last few years should be sufficient
+3. libsdl, specifically [SDL2](https://wiki.libsdl.org/SDL2/FrontPage).
+    - This is easiest to install via your package manager (apt, pacman, dnf,
+      (*etc.*))
+
+### From GitHub
+
+```bash
+go install github.com/sof202/scrawl@latest
+```
+
+### From source code
+
+```bash
+git clone https://github.com/sof202/scrawl
+go install scrawl
+```
+
 ## Usage
 
 Run the program with:
