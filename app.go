@@ -66,6 +66,7 @@ func NewApp(width, height int32) (*ScrawlApp, error) {
 		window:     window,
 		renderer:   renderer,
 		texture:    texture,
+		running:    true,
 		width:      width,
 		height:     height,
 		stride:     int(width * bytesPerRow),
@@ -103,12 +104,11 @@ func (a *ScrawlApp) Run(outputPath string) error {
 	}
 
 	// Event listener
-	running := true
-	for running {
+	for a.running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
-				running = false
+				a.running = false
 				a.saveImage(outputPath)
 
 			case *sdl.KeyboardEvent:
@@ -119,7 +119,7 @@ func (a *ScrawlApp) Run(outputPath string) error {
 				case sdl.K_c: // clear
 					a.canvas = make([]bool, a.width*a.height)
 				case sdl.K_ESCAPE: // exit without saving
-					running = false
+					a.running = false
 				}
 
 			case *sdl.MouseWheelEvent:
