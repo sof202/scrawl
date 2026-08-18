@@ -10,6 +10,7 @@ type ScrawlApp struct {
 	window   *sdl.Window
 	renderer *sdl.Renderer
 	texture  *sdl.Texture
+	running  bool
 
 	width, height int32
 	stride        int
@@ -88,21 +89,6 @@ func (a *ScrawlApp) Close() {
 }
 
 func (a *ScrawlApp) Run(outputPath string) error {
-	updateScreen := func() {
-		a.canvasToPixels()
-		a.texture.Update(
-			nil,
-			unsafe.Pointer(unsafe.SliceData(a.pixels)),
-			a.stride,
-		)
-		a.renderer.Copy(a.texture, nil, nil)
-
-		// Must come after copying texture as the texture covers the entire
-		// window.
-		a.drawRing(a.mouseX, a.mouseY, a.brushSize)
-		a.renderer.Present()
-	}
-
 	// Event listener
 	for a.running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -156,8 +142,23 @@ func (a *ScrawlApp) Run(outputPath string) error {
 				}
 			}
 		}
-		updateScreen()
+		a.updateScreen()
 		sdl.Delay(16)
 	}
 	return nil
+}
+
+func (a *ScrawlApp) updateScreen() {
+	a.canvasToPixels()
+	a.texture.Update(
+		nil,
+		unsafe.Pointer(unsafe.SliceData(a.pixels)),
+		a.stride,
+	)
+	a.renderer.Copy(a.texture, nil, nil)
+
+	// Must come after copying texture as the texture covers the entire
+	// window.
+	a.drawRing(a.mouseX, a.mouseY, a.brushSize)
+	a.renderer.Present()
 }
