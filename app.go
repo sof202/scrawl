@@ -115,60 +115,67 @@ func (a *ScrawlApp) Run(outputPath string) error {
 	// Event listener
 	for a.running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch e := event.(type) {
-			case *sdl.QuitEvent:
-				a.running = false
-				if err := a.saveImage(outputPath); err != nil {
-					return err
-				}
-
-			case *sdl.KeyboardEvent:
-				if e.Type != sdl.KEYDOWN {
-					continue
-				}
-				switch e.Keysym.Sym {
-				case sdl.K_c: // clear
-					a.canvas = make([]bool, a.width*a.height)
-				case sdl.K_ESCAPE: // exit without saving
-					a.running = false
-				}
-
-			case *sdl.MouseWheelEvent:
-				a.brushSize += e.Y * 4
-				if a.brushSize > maxBrushSize {
-					a.brushSize = maxBrushSize
-				}
-				if a.brushSize < minBrushSize {
-					a.brushSize = minBrushSize
-				}
-
-			case *sdl.MouseButtonEvent:
-				if e.Button != sdl.BUTTON_LEFT {
-					continue
-				}
-				switch e.Type {
-				case sdl.MOUSEBUTTONDOWN:
-					a.prevMouseX, a.prevMouseY = e.X, e.Y
-					a.drawing = true
-
-					// Accounts for the case where user only clicks the mouse.
-					// In such cases the line drawing algorithm might not proc
-					// as no mouse motion is detected.
-					a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
-				case sdl.MOUSEBUTTONUP:
-					a.drawing = false
-				}
-
-			case *sdl.MouseMotionEvent:
-				a.mouseX, a.mouseY = e.X, e.Y
-				if a.drawing {
-					a.drawLine(a.prevMouseX, a.prevMouseY, a.mouseX, a.mouseY)
-					a.prevMouseX, a.prevMouseY = e.X, e.Y
-				}
+			if err := a.handleEvent(event, outputPath); err != nil {
+				return err
 			}
 		}
 		a.updateScreen()
 		sdl.Delay(16)
+	}
+	return nil
+}
+
+func (a *ScrawlApp) handleEvent(event sdl.Event, outputPath string) error {
+	switch e := event.(type) {
+	case *sdl.QuitEvent:
+		a.running = false
+		if err := a.saveImage(outputPath); err != nil {
+			return err
+		}
+
+	case *sdl.KeyboardEvent:
+		if e.Type != sdl.KEYDOWN {
+			return nil
+		}
+		switch e.Keysym.Sym {
+		case sdl.K_c: // clear
+			a.canvas = make([]bool, a.width*a.height)
+		case sdl.K_ESCAPE: // exit without saving
+			a.running = false
+		}
+
+	case *sdl.MouseWheelEvent:
+		a.brushSize += e.Y * 4
+		if a.brushSize > maxBrushSize {
+			a.brushSize = maxBrushSize
+		}
+		if a.brushSize < minBrushSize {
+			a.brushSize = minBrushSize
+		}
+
+	case *sdl.MouseButtonEvent:
+		if e.Button != sdl.BUTTON_LEFT {
+			return nil
+		}
+		switch e.Type {
+		case sdl.MOUSEBUTTONDOWN:
+			a.prevMouseX, a.prevMouseY = e.X, e.Y
+			a.drawing = true
+
+			// Accounts for the case where user only clicks the mouse.
+			// In such cases the line drawing algorithm might not proc
+			// as no mouse motion is detected.
+			a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
+		case sdl.MOUSEBUTTONUP:
+			a.drawing = false
+		}
+
+	case *sdl.MouseMotionEvent:
+		a.mouseX, a.mouseY = e.X, e.Y
+		if a.drawing {
+			a.drawLine(a.prevMouseX, a.prevMouseY, a.mouseX, a.mouseY)
+			a.prevMouseX, a.prevMouseY = e.X, e.Y
+		}
 	}
 	return nil
 }
