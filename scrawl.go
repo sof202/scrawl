@@ -131,6 +131,7 @@ func main() {
 				case sdl.MOUSEBUTTONUP:
 					drawing = false
 				}
+
 			case *sdl.MouseMotionEvent:
 				mouseX, mouseY = e.X, e.Y
 				if drawing {
