@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"image/png"
+	"log"
 	"math"
 	"os"
 	"unsafe"
@@ -13,46 +13,55 @@ import (
 )
 
 const (
-	width        int32 = 800
-	height       int32 = 600
 	bytesPerRow  int32 = 4 // len("RGBA") = 4
-	stride             = int(width * bytesPerRow)
-	minBrushSize       = 1
-	maxBrushSize       = 50
-)
-
-var (
-	drawing          = false
-	brushSize  int32 = 10
-	prevMouseX       = width / 2
-	prevMouseY       = height / 2
-	mouseX           = width / 2
-	mouseY           = height / 2
-	white            = color.RGBA{255, 255, 255, 255}
-
-	// The idea here is that, as we don't care about colours (only black
-	// strokes on a white background), our canvas is just a vector of
-	// black/white (Boolean). We then can just convert the canvas to pixels on
-	// each frame.
-	canvas = make([]bool, width*height) // false -> white, true -> black
-	pixels = make([]byte, width*height*bytesPerRow)
+	minBrushSize int32 = 1
+	maxBrushSize int32 = 50
 )
 
 // Main flow:
 // Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
-	// Parse args
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
 		os.Exit(1)
 	}
 	outputPath := os.Args[1]
 
-	// Setup SDL2 window
-	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
-		panic(err)
+	app, err := newApp(800, 600)
+	if err != nil {
+		log.Fatal(err)
 	}
-	defer sdl.Quit()
+	defer app.Close()
+
+	if err := app.Run(outputPath); err != nil {
+		log.Fatal(err)
+	}
+}
+
+type ScrawlApp struct {
+	window   *sdl.Window
+	renderer *sdl.Renderer
+	texture  *sdl.Texture
+
+	width, height int32
+	stride        int
+
+	// The idea here is that, as we don't care about colours (only black
+	// strokes on a white background), our canvas is just a vector of
+	// black/white (Boolean). We then can just convert the canvas to pixels on
+	// each frame.
+	canvas []bool
+	pixels []byte
+
+	drawing                                bool
+	brushSize                              int32
+	prevMouseX, prevMouseY, mouseX, mouseY int32
+}
+
+func newApp(width, height int32) (*ScrawlApp, error) {
+	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
+		return &ScrawlApp{}, err
+	}
 
 	window, err := sdl.CreateWindow(
 		"scrawl",
@@ -63,7 +72,7 @@ func main() {
 		sdl.WINDOW_SHOWN,
 	)
 	if err != nil {
-		panic(err)
+		return &ScrawlApp{}, err
 	}
 
 	renderer, err := sdl.CreateRenderer(
@@ -72,9 +81,8 @@ func main() {
 		sdl.RENDERER_ACCELERATED,
 	)
 	if err != nil {
-		panic(err)
+		return &ScrawlApp{}, err
 	}
-	defer renderer.Destroy()
 
 	texture, err := renderer.CreateTexture(
 		uint32(sdl.PIXELFORMAT_RGBA32), //
@@ -83,23 +91,47 @@ func main() {
 		height,
 	)
 	if err != nil {
-		panic(err)
+		return &ScrawlApp{}, err
 	}
-	defer texture.Destroy()
 
+	return &ScrawlApp{
+		window:     window,
+		renderer:   renderer,
+		texture:    texture,
+		width:      width,
+		height:     height,
+		stride:     int(width * bytesPerRow),
+		canvas:     make([]bool, width*height),
+		pixels:     make([]byte, width*height*bytesPerRow),
+		brushSize:  int32(10),
+		prevMouseX: width / 2,
+		prevMouseY: height / 2,
+		mouseX:     width / 2,
+		mouseY:     height / 2,
+	}, nil
+}
+
+func (a *ScrawlApp) Close() {
+	a.texture.Destroy()
+	a.renderer.Destroy()
+	a.window.Destroy()
+	sdl.Quit()
+}
+
+func (a *ScrawlApp) Run(outputPath string) error {
 	updateScreen := func() {
-		canvasToPixels()
-		texture.Update(
+		a.canvasToPixels()
+		a.texture.Update(
 			nil,
-			unsafe.Pointer(unsafe.SliceData(pixels)),
-			stride,
+			unsafe.Pointer(unsafe.SliceData(a.pixels)),
+			a.stride,
 		)
-		renderer.Copy(texture, nil, nil)
+		a.renderer.Copy(a.texture, nil, nil)
 
 		// Must come after copying texture as the texture covers the entire
 		// window.
-		drawRing(renderer, mouseX, mouseY, brushSize)
-		renderer.Present()
+		a.drawRing(a.mouseX, a.mouseY, a.brushSize)
+		a.renderer.Present()
 	}
 
 	// Event listener
@@ -109,7 +141,7 @@ func main() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
-				saveImage(outputPath)
+				a.saveImage(outputPath)
 
 			case *sdl.KeyboardEvent:
 				if e.Type != sdl.KEYDOWN {
@@ -117,18 +149,18 @@ func main() {
 				}
 				switch e.Keysym.Sym {
 				case sdl.K_c: // clear
-					canvas = make([]bool, width*height)
+					a.canvas = make([]bool, a.width*a.height)
 				case sdl.K_ESCAPE: // exit without saving
 					running = false
 				}
 
 			case *sdl.MouseWheelEvent:
-				brushSize += e.Y * 4
-				if brushSize > maxBrushSize {
-					brushSize = maxBrushSize
+				a.brushSize += e.Y * 4
+				if a.brushSize > maxBrushSize {
+					a.brushSize = maxBrushSize
 				}
-				if brushSize < minBrushSize {
-					brushSize = minBrushSize
+				if a.brushSize < minBrushSize {
+					a.brushSize = minBrushSize
 				}
 
 			case *sdl.MouseButtonEvent:
@@ -137,51 +169,52 @@ func main() {
 				}
 				switch e.Type {
 				case sdl.MOUSEBUTTONDOWN:
-					prevMouseX, prevMouseY = e.X, e.Y
-					drawing = true
+					a.prevMouseX, a.prevMouseY = e.X, e.Y
+					a.drawing = true
 
 					// Accounts for the case where user only clicks the mouse.
 					// In such cases the line drawing algorithm might not proc
 					// as no mouse motion is detected.
-					drawCircle(prevMouseX, prevMouseY, brushSize)
+					a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
 				case sdl.MOUSEBUTTONUP:
-					drawing = false
+					a.drawing = false
 				}
 
 			case *sdl.MouseMotionEvent:
-				mouseX, mouseY = e.X, e.Y
-				if drawing {
-					drawLine(prevMouseX, prevMouseY, mouseX, mouseY)
-					prevMouseX, prevMouseY = e.X, e.Y
+				a.mouseX, a.mouseY = e.X, e.Y
+				if a.drawing {
+					a.drawLine(a.prevMouseX, a.prevMouseY, a.mouseX, a.mouseY)
+					a.prevMouseX, a.prevMouseY = e.X, e.Y
 				}
 			}
 		}
 		updateScreen()
 		sdl.Delay(16)
 	}
+	return nil
 }
 
 // Our canvas holds whether each pixel is black/drawn or white/not-drawn. This
 // isn't useful to the renderer however. As such, we need to convert this
 // information into RGBA information for each pixel on the screen/texture.
-func canvasToPixels() {
-	for i, drawn := range canvas {
+func (a *ScrawlApp) canvasToPixels() {
+	for i, drawn := range a.canvas {
 		idx := i * int(bytesPerRow)
 		var v byte
 		if !drawn {
 			v = 255 // white
 		}
-		pixels[idx+0] = v
-		pixels[idx+1] = v
-		pixels[idx+2] = v
-		pixels[idx+3] = 255 // always no alpha/transparency
+		a.pixels[idx+0] = v
+		a.pixels[idx+1] = v
+		a.pixels[idx+2] = v
+		a.pixels[idx+3] = 255 // always no alpha/transparency
 	}
 
 }
 
 // Updates the canvas to have a circle centred at the cartesian coordinate
 // (cx,cy) with the given radius.
-func drawCircle(cx, cy, radius int32) {
+func (a *ScrawlApp) drawCircle(cx, cy, radius int32) {
 	for dy := -radius; dy <= radius; dy++ {
 		for dx := -radius; dx <= radius; dx++ {
 			if dx*dx+dy*dy > radius*radius { // circle defn: `x^2 + y^2 <= r^2`
@@ -189,10 +222,10 @@ func drawCircle(cx, cy, radius int32) {
 			}
 			x, y := cx+dx, cy+dy
 
-			if x < 0 || x >= width || y < 0 || y >= height { // OOB
+			if x < 0 || x >= a.width || y < 0 || y >= a.height { // OOB
 				continue
 			}
-			canvas[x+y*width] = true // black
+			a.canvas[x+y*a.width] = true // black
 		}
 	}
 }
@@ -206,7 +239,7 @@ func drawCircle(cx, cy, radius int32) {
 // Rather than optimising everything, it's easier to use a line drawing
 // algorithm such as this one (which is good enough as anti-aliasing isn't
 // desirable here).
-func drawLine(x0, y0, x1, y1 int32) {
+func (a *ScrawlApp) drawLine(x0, y0, x1, y1 int32) {
 	var (
 		dx, dy, sx, sy, error, errorDoubled int32
 	)
@@ -235,7 +268,7 @@ func drawLine(x0, y0, x1, y1 int32) {
 	error = dx + dy
 
 	for {
-		drawCircle(x0, y0, brushSize)
+		a.drawCircle(x0, y0, a.brushSize)
 		errorDoubled = 2 * error
 		if errorDoubled >= dy {
 			if x0 == x1 {
@@ -257,13 +290,13 @@ func drawLine(x0, y0, x1, y1 int32) {
 // Opens the given file path and encodes the current state of the canvas as a
 // png. Images are generally between 1KB-20KB depending on how varied the image
 // is (for more information look into the PNG file format).
-func saveImage(path string) {
+func (a *ScrawlApp) saveImage(path string) {
 	// Images drawn in scawl only use black (drawn) and white (not-drawn). As
 	// such, the image can be purely grayscale. This reduces some complexity
 	// and gives a slight speedup.
-	img := image.NewGray(image.Rect(0, 0, int(width), int(height)))
+	img := image.NewGray(image.Rect(0, 0, int(a.width), int(a.height)))
 
-	for i, drawn := range canvas {
+	for i, drawn := range a.canvas {
 		var v byte
 		if !drawn {
 			v = 255 // white
@@ -287,8 +320,8 @@ func saveImage(path string) {
 // coordinates (cx,cy) with the given radius. The primary purpose being:
 // Drawing a circle around the cursor indicating where 'paint' will be placed
 // on the screen.
-func drawRing(renderer *sdl.Renderer, cx, cy, radius int32) {
-	renderer.SetDrawColor(128, 128, 128, 255) // gray
+func (a *ScrawlApp) drawRing(cx, cy, radius int32) {
+	a.renderer.SetDrawColor(128, 128, 128, 255) // gray
 	const circleSegments = 16
 	var prevX, prevY int32
 	for i := 0; i <= circleSegments; i++ {
@@ -296,7 +329,7 @@ func drawRing(renderer *sdl.Renderer, cx, cy, radius int32) {
 		x := cx + int32(float64(radius)*math.Cos(angle))
 		y := cy + int32(float64(radius)*math.Sin(angle))
 		if i > 0 {
-			renderer.DrawLine(prevX, prevY, x, y)
+			a.renderer.DrawLine(prevX, prevY, x, y)
 		}
 		prevX, prevY = x, y
 	}
