@@ -115,7 +115,7 @@ func main() {
 				}
 
 			case *sdl.MouseWheelEvent:
-				brushSize += e.Y * 2
+				brushSize += e.Y * 4
 				if brushSize > maxBrushSize {
 					brushSize = maxBrushSize
 				}
