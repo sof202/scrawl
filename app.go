@@ -123,7 +123,7 @@ func (a *ScrawlApp) Run() error {
 			}
 		}
 		a.updateScreen()
-		sdl.Delay(16)
+		sdl.Delay(16) // Let the CPU breathe
 	}
 	return nil
 }
