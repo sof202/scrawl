@@ -52,21 +52,14 @@ func (a *ScrawlApp) drawLine(x0, y0, x1, y1 int32) {
 		dx, dy, sx, sy, error, errorDoubled int32
 	)
 
-	abs := func(x int32) int32 {
-		if x < 0 {
-			return -x
-		}
-		return x
-	}
-
-	dx = abs(x1 - x0)
+	dx = int32Abs(x1 - x0)
 	if x0 < x1 {
 		sx = 1
 	} else {
 		sx = -1
 	}
 
-	dy = -abs(y1 - y0)
+	dy = -int32Abs(y1 - y0)
 	if y0 < y1 {
 		sy = 1
 	} else {
@@ -93,6 +86,13 @@ func (a *ScrawlApp) drawLine(x0, y0, x1, y1 int32) {
 			y0 += sy
 		}
 	}
+}
+
+func int32Abs(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // Draws radial line segments around the position given by cartesian
