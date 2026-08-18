@@ -22,12 +22,14 @@ type ScrawlApp struct {
 	canvas []bool
 	pixels []byte
 
+	outputPath string
+
 	drawing                                bool
 	brushSize                              int32
 	prevMouseX, prevMouseY, mouseX, mouseY int32
 }
 
-func NewApp(width, height int32) (*ScrawlApp, error) {
+func NewApp(outputPath string, width, height int32) (*ScrawlApp, error) {
 	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
 		return nil, err
 	}
@@ -96,6 +98,7 @@ func NewApp(width, height int32) (*ScrawlApp, error) {
 		stride:     int(width * bytesPerRow),
 		canvas:     make([]bool, width*height),
 		pixels:     make([]byte, width*height*bytesPerRow),
+		outputPath: outputPath,
 		brushSize:  int32(10),
 		prevMouseX: width / 2,
 		prevMouseY: height / 2,
@@ -111,11 +114,11 @@ func (a *ScrawlApp) Close() {
 	sdl.Quit()
 }
 
-func (a *ScrawlApp) Run(outputPath string) error {
+func (a *ScrawlApp) Run() error {
 	// Event listener
 	for a.running {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			if err := a.handleEvent(event, outputPath); err != nil {
+			if err := a.handleEvent(event); err != nil {
 				return err
 			}
 		}
@@ -125,11 +128,11 @@ func (a *ScrawlApp) Run(outputPath string) error {
 	return nil
 }
 
-func (a *ScrawlApp) handleEvent(event sdl.Event, outputPath string) error {
+func (a *ScrawlApp) handleEvent(event sdl.Event) error {
 	switch e := event.(type) {
 	case *sdl.QuitEvent:
 		a.running = false
-		if err := a.saveImage(outputPath); err != nil {
+		if err := a.saveImage(); err != nil {
 			return err
 		}
 

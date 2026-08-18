@@ -22,13 +22,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	app, err := NewApp(defaultWidth, defaultHeight)
+	app, err := NewApp(os.Args[1], defaultWidth, defaultHeight)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer app.Close()
 
-	if err := app.Run(os.Args[1]); err != nil {
+	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
