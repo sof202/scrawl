@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	bytesPerRow  int32 = 4 // len("RGBA") = 4
-	minBrushSize int32 = 1
-	maxBrushSize int32 = 50
+	bytesPerRow   int32 = 4 // len("RGBA") = 4
+	defaultWidth  int32 = 800
+	defaultHeight int32 = 600
+	minBrushSize  int32 = 1
+	maxBrushSize  int32 = 50
 )
 
 // Main flow:
@@ -26,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app, err := newApp(800, 600)
+	app, err := newApp(defaultWidth, defaultHeight)
 	if err != nil {
 		log.Fatal(err)
 	}
