@@ -6,6 +6,9 @@ the image is saved.
 
 ## Installation
 
+If you don't want to build, you can obtain a statically linked binary from
+the [releases page](https://github.com/sof202/scrawl/releases).
+
 ### Prerequisites
 
 1. `CGO_ENABLED=1` (should be on by default, but some distros disable it)
