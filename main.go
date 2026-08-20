@@ -25,13 +25,13 @@ var (
 // Main flow:
 // Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
-	if os.Args[1] == "-v" || os.Args[1] == "--version" {
-		fmt.Println("scawl:", version)
+	if len(os.Args) < 2 || os.Args[1] == "-h" || os.Args[1] == "--help" {
+		fmt.Println("Usage: scrawl <out.png>")
 		os.Exit(0)
 	}
 
-	if os.Args[1] == "-h" || os.Args[1] == "--help" || len(os.Args) < 2 {
-		fmt.Println("Usage: scrawl <out.png>")
+	if os.Args[1] == "-v" || os.Args[1] == "--version" {
+		fmt.Println("scawl:", version)
 		os.Exit(0)
 	}
 
