@@ -16,9 +16,20 @@ const (
 	maxBrushSize  int32 = 50
 )
 
+var (
+	// For releases, this should be overriden with:
+	//   `-ldflags "-X main.version=$(git describe --tags)"`
+	version = "dev"
+)
+
 // Main flow:
 // Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
+	if os.Args[1] == "-v" {
+		fmt.Println("scawl:", version)
+		os.Exit(0)
+	}
+
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
 		os.Exit(1)
