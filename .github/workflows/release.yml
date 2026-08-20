@@ -59,6 +59,7 @@ jobs:
           VERSION: ${{ github.ref_name }} # tag name as only runs on tags
         run: |
           go build \
+            -buildvcs=false \
             -ldflags="-s -w -linkmode external -extldflags -static -X main.version=$VERSION" \
             -o scrawl \
             .
