@@ -14,9 +14,10 @@ jobs:
 
     env:
       SDL2_VERSION: release-2.32.2
-      PKG_CONFIG_PATH: /usr/local/sdl2-static/lib/pkgconfig
-      CGO_CFLAGS: -I/usr/local/sdl2-static/include/SDL2
-      CGO_LDFLAGS: -L/usr/local/sdl2-static/lib
+      SDL2_INSTALL_DIR: ${{ github.workspace }}/.sdl2-static
+      PKG_CONFIG_PATH: ${{ github.workspace }}/.sdl2-static/lib/pkgconfig
+      CGO_CFLAGS: -I${{ github.workspace }}/.sdl2-static/include/SDL2
+      CGO_LDFLAGS: -L${{ github.workspace }}/.sdl2-static/lib
       VERSION: ${{ github.ref_name }} # tag name as only runs on tags
       GOFLAGS: -buildvcs=false # avoid git "dubious ownership" error
 
@@ -43,8 +44,8 @@ jobs:
         id: sdl2-cache
         uses: actions/cache@v4
         with:
-          path: /usr/local/sdl2-static
-          key: sdl2-static-${{ env.SDL2_VERSION }}-ubuntu-${{ hashFiles('/etc/os-release') }}
+          path: ${{ env.SDL2_INSTALL_DIR }}
+          key: sdl2-static-${{ env.SDL2_VERSION }}-${{ runner.os }}
 
       - name: Build static SDL2
         if: steps.sdl2-cache.outputs.cache-hit != 'true'
@@ -53,7 +54,7 @@ jobs:
           cmake -S /tmp/sdl2 -B /tmp/sdl2/build \
             -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build /tmp/sdl2/build --parallel
-          sudo cmake --install /tmp/sdl2/build --prefix /usr/local/sdl2-static
+          cmake --install /tmp/sdl2/build --prefix "$SDL2_INSTALL_DIR"
 
       - name: Build binary (SDL2 static, GL/X11 dlopen'd from host at runtime)
         env:
