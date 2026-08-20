@@ -25,7 +25,7 @@ var (
 // Main flow:
 // Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
-	if os.Args[1] == "-v" {
+	if os.Args[1] == "-v" || os.Args[1] == "--version" {
 		fmt.Println("scawl:", version)
 		os.Exit(0)
 	}
