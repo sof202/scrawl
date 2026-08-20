@@ -16,6 +16,10 @@ jobs:
 
     env:
       SDL2_VERSION: release-2.32.2
+      SCRAWL_VERSION: ${{ github.ref_name }} # tag name as only runs on tags
+      PKG_CONFIG_PATH: /usr/local/sdl2-static/lib/pkgconfig
+      CGO_CFLAGS: -I/usr/local/sdl2-static/include/SDL2
+      CGO_LDFLAGS: -L/usr/local/sdl2-static/lib
 
     steps:
       - name: Install build dependencies
@@ -45,22 +49,15 @@ jobs:
           cmake --build /tmp/sdl2/build --parallel
           cmake --install /tmp/sdl2/build --prefix /usr/local/sdl2-static
 
-      - name: Make static SDL2 visible to pkg-config
-        run: |
-          echo "PKG_CONFIG_PATH=/usr/local/sdl2-static/lib/pkgconfig" >> "$GITHUB_ENV"
-          echo "CGO_CFLAGS=-I/usr/local/sdl2-static/include/SDL2" >> "$GITHUB_ENV"
-          echo "CGO_LDFLAGS=-L/usr/local/sdl2-static/lib" >> "$GITHUB_ENV"
-
       - name: Build static binary
         env:
           CGO_ENABLED: 1
           GOOS: linux
           GOARCH: amd64
-          VERSION: ${{ github.ref_name }} # tag name as only runs on tags
         run: |
           go build \
             -buildvcs=false \
-            -ldflags="-s -w -linkmode external -extldflags -static -X main.version=$VERSION" \
+            -ldflags="-s -w -linkmode external -extldflags -static -X main.version=$SCRAWL_VERSION" \
             -o scrawl \
             .
 
