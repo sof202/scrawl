@@ -11,34 +11,40 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: golang:1.26-alpine
 
     env:
       SDL2_VERSION: release-2.32.2
-      SCRAWL_VERSION: ${{ github.ref_name }} # tag name as only runs on tags
       PKG_CONFIG_PATH: /usr/local/sdl2-static/lib/pkgconfig
       CGO_CFLAGS: -I/usr/local/sdl2-static/include/SDL2
       CGO_LDFLAGS: -L/usr/local/sdl2-static/lib
+      VERSION: ${{ github.ref_name }} # tag name as only runs on tags
+      GOFLAGS: -buildvcs=false # avoid git "dubious ownership" error
 
     steps:
-      - name: Install build dependencies
-        run: |
-          apk add --no-cache \
-            gcc g++ musl-dev make cmake git pkgconf \
-            alsa-lib-dev mesa-dev \
-            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
-            wayland-dev linux-headers
-
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake git pkg-config \
+            libasound2-dev libpulse-dev \
+            libgl1-mesa-dev libegl1-mesa-dev \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libwayland-dev libxkbcommon-dev libdecor-0-dev
 
       - name: Cache static SDL2 build
         id: sdl2-cache
         uses: actions/cache@v4
         with:
           path: /usr/local/sdl2-static
-          key: sdl2-static-${{ env.SDL2_VERSION }}-alpine-${{ hashFiles('/etc/os-release') }}
+          key: sdl2-static-${{ env.SDL2_VERSION }}-ubuntu-${{ hashFiles('/etc/os-release') }}
 
       - name: Build static SDL2
         if: steps.sdl2-cache.outputs.cache-hit != 'true'
@@ -47,35 +53,29 @@ jobs:
           cmake -S /tmp/sdl2 -B /tmp/sdl2/build \
             -DSDL_STATIC=ON -DSDL_SHARED=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build /tmp/sdl2/build --parallel
-          cmake --install /tmp/sdl2/build --prefix /usr/local/sdl2-static
+          sudo cmake --install /tmp/sdl2/build --prefix /usr/local/sdl2-static
 
-      - name: Build static binary
+      - name: Build binary (SDL2 static, GL/X11 dlopen'd from host at runtime)
         env:
           CGO_ENABLED: 1
           GOOS: linux
           GOARCH: amd64
         run: |
           go build \
-            -buildvcs=false \
-            -ldflags="-s -w -linkmode external -extldflags -static -X main.version=$SCRAWL_VERSION" \
+            -ldflags="-s -w -X main.version=$VERSION" \
             -o scrawl \
             .
 
-      - name: Verify binary is statically linked
-        run: |
-          file scrawl
-          ldd scrawl || true
-
       - name: Bundle with LICENSE
         run: |
-          mkdir scrawl-linux-x86_64
-          mv scrawl scrawl-linux-x86_64
-          cp LICENSE scrawl-linux-x86_64
-          tar -czf scrawl-linux-x86_64.tar.gz scrawl-linux-x86_64
+          mkdir scrawl-linux-glibc-x86_64
+          mv scrawl scrawl-linux-glibc-x86_64
+          cp LICENSE scrawl-linux-glibc-x86_64
+          tar -czf scrawl-linux-glibc-x86_64.tar.gz scrawl-linux-glibc-x86_64
 
       - name: Attach binary to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: scrawl-linux-x86_64.tar.gz
+          files: scrawl-linux-glibc-x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
