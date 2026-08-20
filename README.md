@@ -112,3 +112,9 @@ So that's it. To emulate pencil and pen:
 
 I've also been learning Go as of late, so this was a good opportunity to apply
 what I've learned (and use SDL).
+
+## Neovim plugin
+
+For me, the main use for scrawl is to quickly add an image into a markdown
+document. To do this efficiently, I use 
+[this neovim plugin](https://github.com/sof202/scrawl.nvim/).
