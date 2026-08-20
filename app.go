@@ -45,10 +45,20 @@ func NewApp(outputPath string, width, height int32) (*ScrawlApp, error) {
 		}
 	}()
 
+	// Rather than use sdl.WINDOWPOS_CENTERED (which has some edge case bugs),
+	// we compute the centre of the display manually.
+	displayIndex := 0
+	bounds, err := sdl.GetDisplayBounds(displayIndex)
+	if err != nil {
+		return nil, err
+	}
+	xPosition := bounds.X + (bounds.W-width)/2
+	yPosition := bounds.Y + (bounds.H-height)/2
+
 	window, err := sdl.CreateWindow(
 		"scrawl",
-		sdl.WINDOWPOS_CENTERED,
-		sdl.WINDOWPOS_CENTERED,
+		xPosition,
+		yPosition,
 		width,
 		height,
 		sdl.WINDOW_SHOWN,
