@@ -31,7 +31,7 @@ func main() {
 	}
 
 	if os.Args[1] == "-v" || os.Args[1] == "--version" {
-		fmt.Println("scawl:", version)
+		fmt.Println("scrawl:", version)
 		os.Exit(0)
 	}
 
