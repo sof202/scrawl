@@ -30,9 +30,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: scrawl <out.png>")
-		os.Exit(1)
+	if os.Args[1] == "-h" || os.Args[1] == "--help" || len(os.Args) < 2 {
+		fmt.Println("Usage: scrawl <out.png>")
+		os.Exit(0)
 	}
 
 	app, err := NewApp(os.Args[1], defaultWidth, defaultHeight)
