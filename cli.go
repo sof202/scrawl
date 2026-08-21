@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 )
 
@@ -32,55 +31,59 @@ func usage() {
 	)
 }
 
-func parseArgs() CLI {
-	if len(os.Args) < 2 {
-		usage()
-		os.Exit(1)
+func parseArgs(args []string) (cli CLI, exitCode int, err error) {
+	if len(args) < 2 {
+		return CLI{}, 1, fmt.Errorf("missing required <out.png> argument")
 	}
-	if os.Args[1] == "-h" || os.Args[1] == "--help" {
+
+	switch args[1] {
+	case "-h", "--help":
 		usage()
-		os.Exit(0)
-	}
-	if os.Args[1] == "-v" || os.Args[1] == "--version" {
+		return CLI{}, 0, nil
+	case "-v", "--version":
 		fmt.Println("scrawl:", version)
-		os.Exit(0)
+		return CLI{}, 0, nil
 	}
 
-	cli := CLI{width: defaultWidth, height: defaultHeight}
+	cli = CLI{
+		outputPath: args[1],
+		width:      defaultWidth,
+		height:     defaultHeight,
+	}
 
-	cli.outputPath = os.Args[1]
-	for i := 2; i < len(os.Args); i++ {
-		if os.Args[i] == "-w" || os.Args[i] == "--width" {
-			i++
-			width, err := strconv.Atoi(os.Args[i])
+	i := 2
+	nextArg := func() (string, bool) {
+		i++
+		if i >= len(args) {
+			return "", false
+		}
+		return args[i], true
+	}
+	for ; i < len(args); i++ {
+		switch args[i] {
+		case "-w", "--width":
+			value, ok := nextArg()
+			if !ok {
+				return CLI{}, 1, fmt.Errorf("No argument for %s", args[i-1])
+			}
+			width, err := strconv.Atoi(value)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"width must be coercible to integer (%s)\n",
-					os.Args[i],
-				)
-				usage()
-				os.Exit(1)
+				return CLI{}, 1, fmt.Errorf("width must be coercible to integer (%s)", value)
 			}
 			cli.width = int32(width)
-		} else if os.Args[i] == "-h" || os.Args[i] == "--height" {
-			i++
-			height, err := strconv.Atoi(os.Args[i])
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"height must be coercible to integer (%s)\n",
-					os.Args[i],
-				)
-				usage()
-				os.Exit(1)
+		case "-h", "--height":
+			value, ok := nextArg()
+			if !ok {
+				return CLI{}, 1, fmt.Errorf("No argument for %s", args[i-1])
 			}
-			cli.height = int32(height)
-		} else {
-			fmt.Fprintf(os.Stderr, "Not a valid option: %s\n", os.Args[i])
-			usage()
-			os.Exit(1)
+			height, err := strconv.Atoi(value)
+			if err != nil {
+				return CLI{}, 1, fmt.Errorf("height must be coercible to integer (%s)", value)
+			}
+			cli.width = int32(height)
+		default:
+			return CLI{}, 1, fmt.Errorf("Not a valid option %s", args[i])
 		}
 	}
-	return cli
+	return cli, -1, nil
 }
