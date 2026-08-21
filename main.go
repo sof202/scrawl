@@ -1,20 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"log"
-	"os"
-)
-
-const (
-	bytesPerRow int32 = 4 // len("RGBA") = 4
-
-	// Canvas is to be square, I like this more aesthetically
-	defaultWidth  int32 = 600
-	defaultHeight int32 = 600
-	minBrushSize  int32 = 1
-	maxBrushSize  int32 = 50
-)
+import "log"
 
 var (
 	// For releases, this should be overriden with:
@@ -22,20 +8,17 @@ var (
 	version = "dev"
 )
 
+const (
+	bytesPerRow int32 = 4 // len("RGBA") = 4
+
+	minBrushSize int32 = 1
+	maxBrushSize int32 = 50
+)
+
 // Main flow:
 // Parse args -> Setup window -> Event listen -> Update drawn texture -> Render
 func main() {
-	if len(os.Args) < 2 || os.Args[1] == "-h" || os.Args[1] == "--help" {
-		fmt.Println("Usage: scrawl <out.png>")
-		os.Exit(0)
-	}
-
-	if os.Args[1] == "-v" || os.Args[1] == "--version" {
-		fmt.Println("scrawl:", version)
-		os.Exit(0)
-	}
-
-	app, err := NewApp(os.Args[1], defaultWidth, defaultHeight)
+	app, err := NewApp(parseArgs())
 	if err != nil {
 		log.Fatal(err)
 	}

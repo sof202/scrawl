@@ -33,7 +33,10 @@ type ScrawlApp struct {
 	prevMouseX, prevMouseY, mouseX, mouseY int32
 }
 
-func NewApp(outputPath string, width, height int32) (*ScrawlApp, error) {
+func NewApp(cli CLI) (*ScrawlApp, error) {
+	width := cli.width
+	height := cli.height
+
 	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
 		return nil, err
 	}
@@ -112,7 +115,7 @@ func NewApp(outputPath string, width, height int32) (*ScrawlApp, error) {
 		stride:     int(width * bytesPerRow),
 		canvas:     make([]bool, width*height),
 		pixels:     make([]byte, width*height*bytesPerRow),
-		outputPath: outputPath,
+		outputPath: cli.outputPath,
 		brushSize:  int32(10),
 		prevMouseX: width / 2,
 		prevMouseY: height / 2,
@@ -189,7 +192,7 @@ func (a *ScrawlApp) handleMouseButtonEvent(e *sdl.MouseButtonEvent) {
 		a.prevMouseX, a.prevMouseY = e.X, e.Y
 		a.drawing = true
 
-		// Accounts for the case where user only clicks the mouse.
+		// Accounts for the case where user only ks the mouse.
 		// In such cases the line drawing algorithm might not proc
 		// as no mouse motion is detected.
 		a.drawCircle(a.prevMouseX, a.prevMouseY, a.brushSize)
