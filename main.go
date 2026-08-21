@@ -2,12 +2,6 @@ package main
 
 import "log"
 
-var (
-	// For releases, this should be overriden with:
-	//   `-ldflags "-X main.version=$(git describe --tags)"`
-	version = "dev"
-)
-
 const (
 	bytesPerRow int32 = 4 // len("RGBA") = 4
 

@@ -12,6 +12,12 @@ const (
 	defaultHeight int32 = 600
 )
 
+var (
+	// For releases, this should be overriden with:
+	//   `-ldflags "-X main.version=$(git describe --tags)"`
+	version = "dev"
+)
+
 type CLI struct {
 	outputPath string
 	width      int32
