@@ -9,6 +9,8 @@ const (
 	// Canvas is to be square, I like this more aesthetically
 	defaultWidth  int32 = 600
 	defaultHeight int32 = 600
+
+	noExitCode = -1 // Sentinel value
 )
 
 var (
@@ -85,5 +87,5 @@ func parseArgs(args []string) (cli CLI, exitCode int, err error) {
 			return CLI{}, 1, fmt.Errorf("Not a valid option %s", args[i])
 		}
 	}
-	return cli, -1, nil
+	return cli, noExitCode, nil
 }

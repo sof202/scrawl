@@ -22,7 +22,7 @@ func main() {
 		usage()
 		os.Exit(exitCode)
 	}
-	if exitCode >= 0 {
+	if exitCode != noExitCode {
 		os.Exit(exitCode)
 	}
 
